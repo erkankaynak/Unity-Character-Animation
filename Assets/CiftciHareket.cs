@@ -4,79 +4,67 @@ using UnityEngine;
 
 public class CiftciHareket : MonoBehaviour
 {
-    public float yurumeHizi = 5f;
-    public float kosmaHizi = 10f;
+    public float hiz = 5f;
 
+    public float gravity = -9.81f;
     public float donusHiz = 200f;
-    public float ziplamaGucu = 50f;
-
-    public AudioSource audioSource;
+    public float ziplamaGucu = 5f;
 
     private Animator animator;
     private Rigidbody rb;
+    private CharacterController cc;
 
-    private bool havada = false;
+    public float ySpeed = 0f;
 
     void Start()
     {
         animator = GetComponent<Animator>();
+        cc = GetComponent<CharacterController>();
         rb =   GetComponent<Rigidbody>();
     }
 
 
     void Update()
     {
-        var hareketHiz = 0f;
 
-        if (Input.GetKey(KeyCode.A))
-        {
-            transform.rotation = Quaternion.Euler(0f, -90f, 0f);
-            hareketHiz = yurumeHizi;
-        }
-
-        if (Input.GetKey(KeyCode.D))
-        {
-            transform.rotation = Quaternion.Euler(0f, 90f, 0f);
-            hareketHiz = yurumeHizi;
-        }
-
-
-        if (Input.GetKey(KeyCode.W))
-        {
-            transform.rotation = Quaternion.Euler(0f, 0f, 0f);
-            hareketHiz = yurumeHizi;
-        }
-
-        if (Input.GetKey(KeyCode.S))
-        {
-            transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            hareketHiz = yurumeHizi;
-        }
-
-        if (Input.GetKey(KeyCode.LeftShift))
-        {
-            hareketHiz = kosmaHizi;
-        }
-
+        var hareketVektor = Vector3.right * Input.GetAxis("Horizontal") + Vector3.forward * Input.GetAxis("Vertical");
         
-        transform.Translate(Vector3.forward * hareketHiz * Time.deltaTime);
-        animator.SetFloat("HareketHiz", hareketHiz);
 
-
-
-        if (Input.GetKeyDown(KeyCode.Space) && havada == false)
+        if(hareketVektor != Vector3.zero)
         {
-            havada = true;
-            audioSource.Play();
-            rb.AddForce(Vector3.up * ziplamaGucu, ForceMode.Impulse);
-            animator.SetBool("Zipla", true);
+            transform.rotation = Quaternion.LookRotation(hareketVektor);
+            animator.SetBool("Yuruyor", true);
+
         }
+        else
+        {
+            animator.SetBool("Yuruyor", false); 
+        }
+
+        if (cc.isGrounded)
+        {
+            ySpeed = -1f;
+            if (Input.GetButton("Jump"))
+            {
+                ySpeed = ziplamaGucu;
+                animator.SetBool("Zipla", true);
+            }
+            else
+            {
+                animator.SetBool("Zipla", false);
+            }
+
+            animator.SetBool("Dusuyor",false);
+        }
+        else
+        {
+            ySpeed += gravity * Time.deltaTime;
+            animator.SetBool("Dusuyor", true);  
+        }
+        
+        hareketVektor.y = ySpeed;
+        cc.Move(hareketVektor * hiz * Time.deltaTime);
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("Ziplama bitti");
-        animator.SetBool("Zipla", false);
-        havada = false;
-    }
+
 }
